@@ -1,7 +1,7 @@
 #lang racket
 (require 2htdp/universe 2htdp/image)
 
-(struct interval (small big))
+(struct interval (small big guesses))
 
 ;;; constants
 (define TEXT-SIZE 12)
@@ -20,6 +20,8 @@
 (define TEXT-X 3)
 (define TEXT-UPPER-Y 10)
 (define TEXT-LOWER-Y 135)
+(define GUESSES-SIZE 12)
+(define GUESSES-COLOR "green")
 (define MT-SC
   (place-image/align
    HELP-TEXT TEXT-X TEXT-UPPER-Y "left" "top"
@@ -29,7 +31,7 @@
 
 ;; main
 (define (start lower upper)
-  (big-bang (interval lower upper)
+  (big-bang (interval lower upper 0)
             (on-key deal-with-guess)
             (to-draw render)
             (stop-when single? render-last-scene)))
@@ -44,20 +46,30 @@
 
 (define (smaller w)
   (interval (interval-small w)
-            (max (interval-small w) (sub1 (guess w)))))
+            (max (interval-small w) (sub1 (guess w)))
+            (+ 1 (interval-guesses w))))
 
 (define (bigger w)
   (interval (min (interval-big w) (add1 (guess w)))
-            (interval-big w)))
+            (interval-big w)
+            (+ 1 (interval-guesses w))))
 
 (define (guess w)
   (quotient (+ (interval-small w) (interval-big w)) 2))
 
 (define (render w)
-  (overlay (text (number->string (guess w)) SIZE COLOR) MT-SC))
+  (overlay (overlay/offset
+            (text (number->string (guess w)) SIZE COLOR) 0 40
+            (text (number->string (interval-guesses w))
+                  GUESSES-SIZE GUESSES-COLOR))
+           MT-SC))
 
 (define (render-last-scene w)
-  (overlay (text "End" SIZE COLOR) MT-SC))
+  (overlay (overlay/offset
+            (text "End" SIZE COLOR) 0 40
+            (text (number->string (interval-guesses w))
+                  GUESSES-SIZE GUESSES-COLOR))
+           MT-SC))
 
 (define (single? w)
   (= (interval-small w) (interval-big w)))
