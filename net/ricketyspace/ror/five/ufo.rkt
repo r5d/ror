@@ -1,23 +1,70 @@
 #lang racket
 (require 2htdp/universe 2htdp/image)
 
-(define WIDTH 300)
-(define HEIGHT 325)
+;;; world structure
+(struct ufo-pos (x y))
 
-(define (add-3-to-state current-state)
-  (+ current-state 3))
+;;; constants
+(define WORLD-WIDTH 300)
+(define WORLD-HEIGHT 325)
+(define MOVE-LEN 3)
+(define UFO (bitmap/file "resources/zarking-ufo.png"))
+(define UFO-WIDTH (image-width UFO))
+(define UFO-HEIGHT (image-height UFO))
 
+;;; ufo movement functions
+(define (ufo-move-up current-state)
+  (let ((x (ufo-pos-x current-state))
+        (y-up (- (ufo-pos-y current-state) MOVE-LEN)))
+    (cond [(>= y-up (/ UFO-HEIGHT 2)) (ufo-pos x y-up)]
+          [else current-state])))
+
+(define (ufo-move-down current-state)
+  (let ((x (ufo-pos-x current-state))
+        (y-down (+ (ufo-pos-y current-state) MOVE-LEN)))
+    (cond [(<= y-down (- WORLD-HEIGHT (/ UFO-HEIGHT 2)))
+           (ufo-pos x y-down)]
+          [else current-state])))
+
+
+(define (ufo-move-left current-state)
+  (let ((x-left (- (ufo-pos-x current-state) MOVE-LEN))
+        (y (ufo-pos-y current-state)))
+    (cond [(>= x-left (/ UFO-WIDTH 2))
+           (ufo-pos x-left y)]
+          [else current-state])))
+
+(define (ufo-move-right current-state)
+  (let ((x-right (+ (ufo-pos-x current-state) MOVE-LEN))
+        (y (ufo-pos-y current-state)))
+    (cond [(<= x-right (- WORLD-WIDTH (/ UFO-WIDTH 2)))
+           (ufo-pos x-right y)]
+          [else current-state])))
+
+
+;;; big bang functions
 (define (draw-a-ufo-onto-an-empty-scene current-state)
-  (place-image IMAGE-of-UFO (/ WIDTH 2) current-state
-               (empty-scene WIDTH HEIGHT)))
+  (place-image UFO
+               (ufo-pos-x current-state)
+               (ufo-pos-y current-state)
+               (empty-scene WORLD-WIDTH WORLD-HEIGHT)))
 
-(define IMAGE-of-UFO (bitmap/file "resources/zarking-ufo.png"))
+(define (add-3-to-posy current-state)
+  (ufo-pos (ufo-pos-x current-state)
+           (+ (ufo-pos-y current-state) 3)))
 
-(define (state-is-300 current-state)
-  (>= current-state 300))
+(define (posy-is-300 current-state)
+  (>= (ufo-pos-y current-state) 300))
 
-(big-bang 0
-          (on-tick add-3-to-state)
+(define (move-ufo current-state key)
+  (cond [(key=? key "up") (ufo-move-up current-state)]
+        [(key=? key "down") (ufo-move-down current-state)]
+        [(key=? key "left") (ufo-move-left current-state)]
+        [(key=? key "right") (ufo-move-right current-state)]
+        [else current-state]))
+
+;;; the big bang
+(big-bang (ufo-pos (/ WORLD-WIDTH 2) (/ WORLD-HEIGHT 2))
           (to-draw draw-a-ufo-onto-an-empty-scene)
-          (stop-when state-is-300))
+          (on-key move-ufo))
 
