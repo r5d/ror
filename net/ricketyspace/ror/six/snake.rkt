@@ -2,7 +2,7 @@
 (require 2htdp/universe 2htdp/image)
 
 ;; data
-(struct pit (snake goos))
+(struct pit (snake goos dinged))
 (struct snake (dir segs))
 (struct goo (loc expire))
 (struct posn (x y))
@@ -39,7 +39,7 @@
                        (fresh-goo)
                        (fresh-goo)
                        (fresh-goo)
-                       (fresh-goo)))
+                       (fresh-goo)) 0)
             (on-tick next-pit TICK-RATE)
             (on-key direct-snake)
             (to-draw render-pit)
@@ -48,10 +48,11 @@
 (define (next-pit w)
   (define snake (pit-snake w))
   (define goos (pit-goos w))
+  (define dinged (pit-dinged w))
   (define goo-to-eat (can-eat snake goos))
   (if goo-to-eat
-      (pit (grow snake) (age-goo (eat goos goo-to-eat)))
-      (pit (slither snake) (age-goo goos))))
+      (pit (grow snake) (age-goo (eat goos goo-to-eat)) (+ 1 dinged))
+      (pit (slither snake) (age-goo goos) dinged)))
 
 (define (direct-snake w ke)
   (cond [(dir? ke) (world-change-dir w ke)]
@@ -66,7 +67,11 @@
   (or (self-colliding? snake) (wall-colliding? snake)))
 
 (define (render-end w)
-  (overlay (text "Game Over" ENDGAME-TEXT-SIZE "black")
+  (overlay (above (text "Game Over" ENDGAME-TEXT-SIZE "black")
+                  (text (string-append "You dinged "
+                                       (number->string (pit-dinged w))
+                                       " goos.")
+                        ENDGAME-TEXT-SIZE "black"))
            (render-pit w)))
 
 
@@ -146,7 +151,7 @@
               (cons? (rest (snake-segs the-snake))))
          (stop-with w)]
         [else
-         (pit (snake-change-dir the-snake d) (pit-goos w))]))
+         (pit (snake-change-dir the-snake d) (pit-goos w) (pit-dinged w))]))
 
 (define (opposite-dir? d1 d2)
   (cond [(string=? d1 "up") (string=? d2 "down")]
