@@ -83,7 +83,7 @@
                   (can-eat snake (rest goos)))]))
 
 (define (eat goos goo-to-eat)
-  (cons (fresh-goo) (remove goo-to-eat goos)))
+  (append (list (fresh-goo)) (remove goo-to-eat goos)))
 
 (define (close? s g)
   (posn=? s (goo-loc g)))
@@ -118,9 +118,9 @@
 (define (renew goos)
   (cond [(empty? goos) empty]
         [(rotten? (first goos))
-         (cons (fresh-goo) (renew (rest goos)))]
+         (append (fresh-goos) (renew (rest goos)))]
         [else
-         (cons (first goos) (renew (rest goos)))]))
+         (append (list (first goos)) (renew (rest goos)))]))
 
 (define (rot goos)
   (cond [(empty? goos) empty]
@@ -137,6 +137,12 @@
              (add1 (random (sub1 SIZE))))
        EXPIRATION-TIME))
 
+(define (fresh-goos)
+  (define (gen-goos n)
+    (cond [(= n 0) empty]
+          [else (cons (fresh-goo) (gen-goos (- n 1)))]))
+  (let ((n (random 4)))
+    (gen-goos n)))
 
 ;; keys
 (define (dir? x)
