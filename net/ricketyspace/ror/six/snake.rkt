@@ -88,6 +88,10 @@
 (define (close? s g)
   (posn=? s (goo-loc g)))
 
+(define (grow-size sn size)
+  (cond [(= size 0) sn]
+        [else (grow-size (grow sn) (- size 1))]))
+
 (define (grow sn)
   (snake (snake-dir sn)
          (cons (next-head sn) (snake-segs sn))))
