@@ -4,7 +4,7 @@
 ;; data
 (struct pit (snake goos dinged))
 (struct snake (dir segs))
-(struct goo (loc expire))
+(struct goo (loc expire type))
 (struct posn (x y))
 
 ;; constants
@@ -130,12 +130,13 @@
   (zero? (goo-expire g)))
 
 (define (decay g)
-  (goo (goo-loc g) (sub1 (goo-expire g))))
+  (goo (goo-loc g) (sub1 (goo-expire g)) (goo-type g)))
 
 (define (fresh-goo)
   (goo (posn (add1 (random (sub1 SIZE)))
              (add1 (random (sub1 SIZE))))
-       EXPIRATION-TIME))
+       EXPIRATION-TIME
+       (random 1 3)))
 
 (define (fresh-goos)
   (define (gen-goos n)
