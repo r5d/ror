@@ -51,7 +51,8 @@
   (define dinged (pit-dinged w))
   (define goo-to-eat (can-eat snake goos))
   (if goo-to-eat
-      (pit (grow snake) (age-goo (eat goos goo-to-eat)) (+ 1 dinged))
+      (pit (grow-size snake (goo-type goo-to-eat))
+           (age-goo (eat goos goo-to-eat)) (+ 1 dinged))
       (pit (slither snake) (age-goo goos) dinged)))
 
 (define (direct-snake w ke)
