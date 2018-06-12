@@ -21,6 +21,7 @@
 
 (define MT-SCENE (empty-scene WIDTH-PX HEIGHT-PX))
 (define GOO-IMG (bitmap "resources/goo.gif"))
+(define GOO-RED-IMG (bitmap "resources/goo-red.gif"))
 (define SEG-IMG (bitmap "resources/body.gif"))
 (define HEAD-IMG (bitmap "resources/head.gif"))
 
@@ -185,11 +186,15 @@
              snake-body-scene))
 
 (define (goo-list+scene goos scene)
-  (define (get-posns-from-goo goos)
+  (define (get-posns-from-goo goos type)
     (cond [(empty? goos) empty]
-          [else (cons (goo-loc (first goos))
-                      (get-posns-from-goo (rest goos)))]))
-  (img-list+scene (get-posns-from-goo goos) GOO-IMG scene))
+          [(= (goo-type (first goos)) type)
+           (cons (goo-loc (first goos))
+                 (get-posns-from-goo (rest goos) type))]
+          [else (get-posns-from-goo (rest goos) type)]))
+  (img-list+scene (get-posns-from-goo goos 1) GOO-IMG
+                  (img-list+scene (get-posns-from-goo goos 2)
+                                  GOO-RED-IMG scene)))
 
 (define (img-list+scene posns img scene)
   (cond [(empty? posns) scene]
