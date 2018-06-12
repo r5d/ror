@@ -148,7 +148,7 @@
   (define (gen-goos n)
     (cond [(= n 0) empty]
           [else (cons (fresh-goo) (gen-goos (- n 1)))]))
-  (let ((n (random 4)))
+  (let ((n (random 3)))
     (gen-goos n)))
 
 ;; keys
