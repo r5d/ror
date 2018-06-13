@@ -2,9 +2,10 @@
 (require 2htdp/universe 2htdp/image)
 
 ;; data
-(struct pit (snake goos dinged))
+(struct pit (snake goos obstacles dinged))
 (struct snake (dir segs))
 (struct goo (loc expire type))
+(struct obstacle (loc expire))
 (struct posn (x y))
 
 ;; constants
@@ -15,6 +16,7 @@
 (define SEG-SIZE 15)
 
 (define EXPIRATION-TIME 150)
+(define OBSTACLE-EXPIRATION-TIME 250)
 
 (define WIDTH-PX (* SEG-SIZE 30))
 (define HEIGHT-PX (* SEG-SIZE 30))
@@ -22,6 +24,7 @@
 (define MT-SCENE (empty-scene WIDTH-PX HEIGHT-PX))
 (define GOO-IMG (bitmap "resources/goo.gif"))
 (define GOO-RED-IMG (bitmap "resources/goo-red.gif"))
+(define OBSTACLE-IMG (bitmap "resources/obstacle.gif"))
 (define SEG-IMG (bitmap "resources/body.gif"))
 (define HEAD-IMG (bitmap "resources/head.gif"))
 
@@ -40,7 +43,10 @@
                        (fresh-goo)
                        (fresh-goo)
                        (fresh-goo)
-                       (fresh-goo)) 0)
+                       (fresh-goo))
+                 (list (fresh-obstacle)
+                       (fresh-obstacle))
+                 0)
             (on-tick next-pit TICK-RATE)
             (on-key direct-snake)
             (to-draw render-pit)
@@ -49,12 +55,16 @@
 (define (next-pit w)
   (define snake (pit-snake w))
   (define goos (pit-goos w))
+  (define obstacles (pit-obstacles w))
   (define dinged (pit-dinged w))
   (define goo-to-eat (can-eat snake goos))
   (if goo-to-eat
       (pit (grow-size snake (goo-type goo-to-eat))
-           (age-goo (eat goos goo-to-eat)) (+ 1 dinged))
-      (pit (slither snake) (age-goo goos) dinged)))
+           (age-goo (eat goos goo-to-eat))
+           (age-obstacle obstacles) (+ 1 dinged))
+      (pit (slither snake)
+           (age-goo goos)
+           (age-obstacle obstacles) dinged)))
 
 (define (direct-snake w ke)
   (cond [(dir? ke) (world-change-dir w ke)]
@@ -62,11 +72,15 @@
 
 (define (render-pit w)
   (snake+scene (pit-snake w)
-               (goo-list+scene (pit-goos w) MT-SCENE)))
+               (goo-list+scene (pit-goos w)
+                               (obstacle-list+scene
+                                (pit-obstacles w) MT-SCENE))))
 
 (define (dead? w)
   (define snake (pit-snake w))
-  (or (self-colliding? snake) (wall-colliding? snake)))
+  (or (self-colliding? snake)
+      (wall-colliding? snake)
+      (obstacle-colliding? snake (pit-obstacles w))))
 
 (define (render-end w)
   (overlay (above (text "Game Over" ENDGAME-TEXT-SIZE "black")
@@ -151,6 +165,32 @@
   (let ((n (random 3)))
     (gen-goos n)))
 
+(define (age-obstacle obstacles)
+  (rot-obstacles (renew-obstacles obstacles)))
+
+(define (renew-obstacles obstacles)
+  (cond [(empty? obstacles)  empty]
+        [(obstacle-expired? (first obstacles))
+         (cons (fresh-obstacle) (renew-obstacles (rest obstacles)))]
+        [else
+         (cons (first obstacles) (renew-obstacles (rest obstacles)))]))
+
+(define (rot-obstacles obstacles)
+  (cond [(empty? obstacles) empty]
+        [else (cons (decay-obstacle (first obstacles))
+                    (rot-obstacles (rest obstacles)))]))
+
+(define (obstacle-expired? obs)
+  (zero? (obstacle-expire obs)))
+
+(define (decay-obstacle obs)
+  (obstacle (obstacle-loc obs) (sub1 (obstacle-expire obs))))
+
+(define (fresh-obstacle)
+  (obstacle (posn (add1 (random (sub1 SIZE)))
+                  (add1 (random (sub1 SIZE))))
+            OBSTACLE-EXPIRATION-TIME))
+
 ;; keys
 (define (dir? x)
   (or (key=? x "up")
@@ -164,7 +204,10 @@
               (cons? (rest (snake-segs the-snake))))
          (stop-with w)]
         [else
-         (pit (snake-change-dir the-snake d) (pit-goos w) (pit-dinged w))]))
+         (pit (snake-change-dir the-snake d)
+              (pit-goos w)
+              (pit-obstacles w)
+              (pit-dinged w))]))
 
 (define (opposite-dir? d1 d2)
   (cond [(string=? d1 "up") (string=? d2 "down")]
@@ -196,6 +239,14 @@
                   (img-list+scene (get-posns-from-goo goos 2)
                                   GOO-RED-IMG scene)))
 
+(define (obstacle-list+scene obstacles scene)
+  (define (get-posns-from-obstacle obstacles)
+    (cond [(empty? obstacles) empty]
+          [else (cons (obstacle-loc (first obstacles))
+                      (get-posns-from-obstacle (rest obstacles)))]))
+  (img-list+scene (get-posns-from-obstacle obstacles)
+                  OBSTACLE-IMG scene))
+
 (define (img-list+scene posns img scene)
   (cond [(empty? posns) scene]
         [else (img+scene
@@ -219,6 +270,12 @@
   (define y (posn-y (snake-head snake)))
   (or (= 0 x) (= x SIZE)
       (= 0 y) (= y SIZE)))
+
+(define (obstacle-colliding? snake obstacles)
+  (cond [(empty? obstacles) #f]
+        [(posn=? (snake-head snake)
+                 (obstacle-loc (first obstacles))) #t]
+        [else (obstacle-colliding? snake (rest obstacles))]))
 
 ;; aux
 (define (posn=? p1 p2)
