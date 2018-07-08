@@ -338,7 +338,11 @@
         [else (obstacle-colliding? snake (rest obstacles))]))
 
 (define (snake-colliding? snake snake-other)
-  (cons? (member (snake-head snake) (snake-segs snake-other))))
+  (define (head-in-other sn other)
+    (cond [(empty? other) #f]
+          [(posn=? sn (first other)) #t]
+          [else (head-in-other sn (rest other))]))
+  (head-in-other (snake-head snake) (snake-segs snake-other)))
 
 ;; aux
 (define (posn=? p1 p2)
