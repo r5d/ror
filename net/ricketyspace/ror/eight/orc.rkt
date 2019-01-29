@@ -67,9 +67,9 @@
 ;; The third field of the world refers to the number of attacks left.
 ;; The fourth field refers to the position of the next attack target.
 
-(struct player (health agility strength) #:transparent #:mutable)
-;; A Player is a (player Nat Nat Nat)
-;; The player's fields correspond to hit points, strength, agility. 
+(struct player (health agility strength armor) #:transparent #:mutable)
+;; A Player is a (player Nat Nat Nat Nat)
+;; The player's fields correspond to hit points, strength, agility, armor.
 
 (struct monster (image [health #:mutable]) #:transparent)
 (struct orc monster (club) #:transparent)
@@ -98,6 +98,7 @@
 (define MAX-HEALTH 35)
 (define MAX-AGILITY 35)
 (define MAX-STRENGTH 35)
+(define MAX-ARMOR 35)
 
 ;; depending on other player attributes, 
 ;; the game picks the number of attacks, flailing and stabbing damage 
@@ -125,6 +126,7 @@
 (define STRENGTH "strength")
 (define AGILITY "agility")
 (define HEALTH "health")
+(define ARMOR "armor")
 (define LOSE  "YOU LOSE")
 (define WIN "YOU WIN")
 (define DEAD "DEAD")
@@ -166,6 +168,7 @@
 (define AGILITY-COLOR "blue")
 (define HEALTH-COLOR "crimson")
 (define STRENGTH-COLOR "forest green") 
+(define ARMOR-COLOR "goldenrod")
 (define MONSTER-COLOR "crimson")
 (define MESSAGE-COLOR "black")
 (define ATTACK-COLOR "crimson")
@@ -274,7 +277,7 @@
 ;; -> Player 
 ;; create a player with maximal capabilities 
 (define (initialize-player) 
-  (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH))
+  (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH 0))
 
 ;; -> [Listof Monster]
 ;; create a list of random monsters of length MONSTER-NUM, 
@@ -447,6 +450,10 @@
 (define player-strength+ 
   (player-update! set-player-strength! player-strength MAX-STRENGTH))
 
+;; Player Nat -> Void
+(define player-armor+
+  (player-update! set-player-armor! player-armor MAX-ARMOR))
+
 ;                                                                          
 ;                                                                          
 ;                                                                          
@@ -488,6 +495,8 @@
    (status-bar (player-agility p) MAX-AGILITY AGILITY-COLOR AGILITY)
    V-SPACER
    (status-bar (player-health p) MAX-HEALTH HEALTH-COLOR HEALTH)
+   V-SPACER
+   (status-bar (player-armor p) MAX-ARMOR ARMOR-COLOR ARMOR)
    V-SPACER V-SPACER V-SPACER
    PLAYER-IMAGE))
 
@@ -701,42 +710,42 @@
   
   ;; testing basic player manipulations
   
-  (check-equal? (let ([p (player 1 0 0)])
+  (check-equal? (let ([p (player 1 0 0 0)])
                   (player-health+ p 5)
                   p)
-                (player 6 0 0))
-  (check-equal? (let ([p (player 0 1 0)])
+                (player 6 0 0 0))
+  (check-equal? (let ([p (player 0 1 0 0)])
                   (player-agility+ p 5)
                   p)
-                (player 0 6 0))
+                (player 0 6 0 0))
   
-  (check-equal? (let ([p (player 0 0 1)])
+  (check-equal? (let ([p (player 0 0 1 0)])
                   (player-strength+ p 5)
                   p)
-                (player 0 0 6))
+                (player 0 0 6 0))
   
-  (check-equal? (let ([p (player 5 5 5)])
+  (check-equal? (let ([p (player 5 5 5 0)])
                   (all-monsters-attack-player p (list (orc 'image 1 1)))
                   p)
-                (player 4 5 5))
+                (player 4 5 5 0))
   
-  (check-equal? (let ([p (player 5 5 5)])
+  (check-equal? (let ([p (player 5 5 5 0)])
                   (all-monsters-attack-player p (list (hydra 'image 1)))
                   p)
-                (player 4 5 5))
+                (player 4 5 5 0))
   
-  (check-equal? (let ([p (player 5 5 5)])
+  (check-equal? (let ([p (player 5 5 5 0)])
                   (all-monsters-attack-player p (list (slime 'image 1 1)))
                   p)
-                (player 4 4 5))
+                (player 4 4 5 0))
   
   (check member 
-         (let ([p (player 5 5 5)]) 
+         (let ([p (player 5 5 5 0)])
            (all-monsters-attack-player p (list (brigand 'image 1)))
            p)
-         (list (player 3 5 5)
-               (player 5 2 5)
-               (player 5 5 1)))
+         (list (player 3 5 5 0)
+               (player 5 2 5 0)
+               (player 5 5 1 0)))
   
   ;; Properties
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -765,7 +774,7 @@
   (define (prop:monster-attack-player-dec i)
     (test-begin
      (for ([i (in-range i)])
-       (define pl (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH))
+       (define pl (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH 0))
        (define mon (first (initialize-monsters)))
        (begin 
          (all-monsters-attack-player pl (list mon))
@@ -779,7 +788,7 @@
   (define (prop:monsters-attack-player-dec i)
     (test-begin 
      (for ([i (in-range i)])
-       (define pl (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH))
+       (define pl (player MAX-HEALTH MAX-AGILITY MAX-STRENGTH 0))
        (define monsters (initialize-monsters))
        (define wor (orc-world pl monsters 0 0))
        (begin 
@@ -808,7 +817,8 @@
   (define (random-player)
     (player (add1 (random MAX-HEALTH))
             (add1 (random MAX-AGILITY))
-            (add1 (random MAX-STRENGTH))))
+            (add1 (random MAX-STRENGTH))
+            0))
   
   ;; testing initializers
   (prop:monster-init-length 1000)
@@ -888,15 +898,15 @@
   ;; testing game predicates
   
   (check-false (lose? WORLD0))
-  (check-true (lose? (orc-world (player 0 30 30) empty 0 0)))
+  (check-true (lose? (orc-world (player 0 30 30 0) empty 0 0)))
   (check-true (all-dead? (list (orc 'image 0 0) (hydra 'image 0))))
   (check-true (all-dead? (list AN-ORC)))
   (check-true (win? (orc-world (initialize-player) (list (orc 'image 0 0)) 0 0)))
   (check-true (win? (orc-world (initialize-player) (list AN-ORC) 0 0)))
   (check-true (end-of-orc-battle? (orc-world (initialize-player) (list (orc 'image 0 0)) 0 0)))
   (check-true (end-of-orc-battle? (orc-world (initialize-player) (list AN-ORC) 0 0)))
-  (check-true (end-of-orc-battle? (orc-world (player 0 30 30) empty 0 0)))
-  (check-true (player-dead? (player 0 2 5)))
+  (check-true (end-of-orc-battle? (orc-world (player 0 30 30 0) empty 0 0)))
+  (check-true (player-dead? (player 0 2 5 0)))
   (check-false (player-dead? (initialize-player)))
   (check-false (not (monster-alive? A-HYDRA)))
   (check-true (monster-alive? (monster 'image 1)))
