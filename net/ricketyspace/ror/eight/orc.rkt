@@ -4,6 +4,8 @@
 
    From github.com/racket/realm
 
+   With some trivial changes.
+
    Commit: 973041cb6a5c696b99b79a 
 |#
 
@@ -21,10 +23,11 @@
    permission to attack a (randomly chosen number) of times. The player uses
    nine keys to play
     -- With the four arrow keys the player navigates among the twelve monsters.
-    -- With "s", "f", and "h", 
+    -- With "s", "f", "h", and "m"
     -- the player can 's'tab a specific monster, 
     -- the player may 'f'lail at several monsters; 
     -- the player may 'h'eal herself. 
+    -- the player may 'm'asturbate for a change.
    When the player runs out of attacks, all live monsters attack the player. 
    After that, it is the player's turn again. 
  
@@ -101,6 +104,7 @@
 (define ATTACKS# 4)
 (define STAB-DAMAGE 2)
 (define FLAIL-DAMAGE 3)
+(define MASTURBATE-DAMAGE 5)
 (define HEALING 8)
 
 ;; monster attributes 
@@ -127,7 +131,8 @@
 (define REMAINING "Remaining attacks ")
 (define INSTRUCTIONS-2 "Select a monster using the arrow keys")
 (define INSTRUCTIONS-1
-  "Press S to stab a monster | Press F to Flail wildly | Press H to Heal")
+  (string-append "Press S to stab a monster | Press F to Flail wildly "
+                 "| Press H to Heal | Press M to Masturbate"))
 
 ;; graphical constants 
 (define HEALTH-BAR-HEIGHT 12)
@@ -216,6 +221,7 @@
     [(key=? "s" k) (stab w)]
     [(key=? "h" k) (heal w)]
     [(key=? "f" k) (flail w)]
+    [(key=? "m" k) (masturbate w)]
     
     [(key=? "right" k) (move-target w +1)]
     [(key=? "left" k)  (move-target w -1)]
@@ -356,6 +362,20 @@
      (length alive)))
   (define getem (cons target (take alive pick#)))
   (for-each (lambda (m) (damage-monster m 1)) getem))
+
+;; OrcWorld -> Void
+
+;; Effect: reduces player agility by x and 2x damages a random number
+;;   of live monsters
+(define (masturbate w)
+  (decrease-attack# w)
+  (define alive (filter monster-alive? (orc-world-lom w)))
+  (define x (random-quotient (player-strength (orc-world-player w))
+                             MASTURBATE-DAMAGE))
+  (define pick# (min x (length alive)))
+  (define getem (take alive pick#))
+  (player-agility+ (orc-world-player w) (- x))
+  (for-each (lambda (m) (damage-monster m (* 2 x))) getem))
 
 ;; OrcWorld -> Void
 ;; Effect: decrease number of remaining attacks 
