@@ -28,6 +28,7 @@
     -- the player may 'f'lail at several monsters; 
     -- the player may 'h'eal herself. 
     -- the player may 'm'asturbate for a change.
+    -- the player may 'b'lock to gain armor.
    When the player runs out of attacks, all live monsters attack the player. 
    After that, it is the player's turn again. 
  
@@ -107,6 +108,7 @@
 (define FLAIL-DAMAGE 3)
 (define MASTURBATE-DAMAGE 5)
 (define HEALING 8)
+(define BLOCK 8)
 
 ;; monster attributes 
 (define MONSTER# 12)
@@ -225,6 +227,7 @@
     [(key=? "h" k) (heal w)]
     [(key=? "f" k) (flail w)]
     [(key=? "m" k) (masturbate w)]
+    [(key=? "b" k) (block w)]
     
     [(key=? "right" k) (move-target w +1)]
     [(key=? "left" k)  (move-target w -1)]
@@ -340,6 +343,11 @@
   (decrease-attack# w)
   (player-health+ (orc-world-player w) HEALING))
 
+;; OrcWorld -> Void
+(define (block w)
+  (decrease-attack# w)
+  (player-armor+ (orc-world-player w) BLOCK))
+
 ;; OrcWorld -> Void 
 ;; Effect: reduces a targeted monster's health
 (define (stab w)
@@ -412,19 +420,28 @@
 (define (all-monsters-attack-player player lom) 
   ;; Monster -> Void
   (define (one-monster-attacks-player monster)
+    (define armor (player-armor player))
+    (define block (cond
+                    [(zero? armor) 0]
+                    [else (random+ armor)]))
+    ;; block buffers the damage
+    (define (damage d)
+      (+ d block))
+    ;; reduce player's armor by block
+    (player-armor+ player (* -1 block))
     (cond
       [(orc? monster)
-       (player-health+ player (random- (orc-club monster)))]
+       (player-health+ player (damage (random- (orc-club monster))))]
       [(hydra? monster)
-       (player-health+ player (random- (monster-health monster)))]
+       (player-health+ player (damage (random- (monster-health monster))))]
       [(slime? monster) 
-       (player-health+ player -1)
-       (player-agility+ player (random- (slime-sliminess monster)))]
+       (player-health+ player (damage -1))
+       (player-agility+ player (damage (random- (slime-sliminess monster))))]
       [(brigand? monster) 
        (case (random 3)
-         [(0) (player-health+ player HEALTH-DAMAGE)]
-         [(1) (player-agility+ player AGILITY-DAMAGE)]
-         [(2) (player-strength+ player STRENGTH-DAMAGE)])]))
+         [(0) (player-health+ player (damage HEALTH-DAMAGE))]
+         [(1) (player-agility+ player (damage AGILITY-DAMAGE))]
+         [(2) (player-strength+ player (damage STRENGTH-DAMAGE))])]))
   ;; -- IN -- 
   (for-each one-monster-attacks-player (filter monster-alive? lom)))
 
