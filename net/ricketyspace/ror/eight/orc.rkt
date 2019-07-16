@@ -16,7 +16,7 @@
    The Orc game is a turn-based battle game between monsters and the player. 
 
    The player encounters a room full of monsters of all kinds, including 
-   orcs, hydras, slimes, and brigands. They are ready to attack. It is
+   orcs, hydras, hydrars, slimes, and brigands. They are ready to attack. It is
    the player's task to get rid of the monsters. 
 
    When the game starts up, it is the player's turn, meaning she is given 
@@ -75,6 +75,7 @@
 (struct monster (image [health #:mutable]) #:transparent)
 (struct orc monster (club) #:transparent)
 (struct hydra monster () #:transparent)
+(struct hydrar monster () #:transparent)
 (struct slime monster (sliminess) #:transparent)
 (struct brigand monster () #:transparent)
 ;; A Monster is a (monster Image Nat)
@@ -86,6 +87,7 @@
 ;; A Slime is a (slime Nat Nat Nat)
 ;; A Brigrand is a (brigand Nat Nat)
 ;; A Hydra is a (hydra Nat Nat)    
+;; A Hydrar is a (hydrar Nat Nat)
 ;; 
 ;; The four monster types all inherit the id and health fields from monster. 
 ;; Two have additional attributes: 
@@ -145,10 +147,11 @@
 ;; compute constants for image frames 
 (define ORC     (bitmap "graphics/orc.png"))
 (define HYDRA   (bitmap "graphics/hydra.png"))
+(define HYDRAR  (bitmap "graphics/hydrar.png"))
 (define SLIME   (bitmap "graphics/slime.bmp"))
 (define BRIGAND (bitmap "graphics/brigand.bmp"))
 
-(define PIC-LIST (list ORC HYDRA SLIME BRIGAND))
+(define PIC-LIST (list ORC HYDRA HYDRAR SLIME BRIGAND))
 (define w (apply max (map image-width PIC-LIST)))
 (define h (apply max (map image-height PIC-LIST)))
 
@@ -160,6 +163,7 @@
 
 (define ORC-IMAGE     (overlay ORC FRAME))
 (define HYDRA-IMAGE   (overlay HYDRA FRAME))
+(define HYDRAR-IMAGE   (overlay HYDRAR FRAME))
 (define SLIME-IMAGE   (overlay SLIME FRAME))
 (define BRIGAND-IMAGE (overlay BRIGAND FRAME))
 
@@ -292,8 +296,9 @@
     (case (random 4)
       [(0) (orc ORC-IMAGE health (random+ CLUB-STRENGTH))]
       [(1) (hydra HYDRA-IMAGE health)]
-      [(2) (slime SLIME-IMAGE health (random+ SLIMINESS))]
-      [(3) (brigand BRIGAND-IMAGE health)]
+      [(2) (hydrar HYDRAR-IMAGE health)]
+      [(3) (slime SLIME-IMAGE health (random+ SLIMINESS))]
+      [(4) (brigand BRIGAND-IMAGE health)]
       [else (error "can't happen")]))
   (build-list MONSTER# create-monster))
 
@@ -434,6 +439,8 @@
        (player-health+ player (damage (random- (orc-club monster))))]
       [(hydra? monster)
        (player-health+ player (damage (random- (monster-health monster))))]
+      [(hydrar? monster)
+       (player-health+ player (random- (monster-health monster)))]
       [(slime? monster) 
        (player-health+ player (damage -1))
        (player-agility+ player (damage (random- (slime-sliminess monster))))]
