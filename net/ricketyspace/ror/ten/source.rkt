@@ -534,6 +534,19 @@
 (define (no-more-moves? g)
   (empty? (game-moves g)))
 
+;; Territory Territory -> Boolean
+;; attack from src territory to destination territory
+;; and see who wins
+(define (dice-attack-win src-t dst-t)
+  (define (roll-dice n)
+    (for/list ([i n])
+      (random 1 7)))
+  (define (sum l)
+    (foldl + 0 l))
+  (define src-attack (sum (roll-dice (territory-dice src-t))))
+  (define dst-defend (sum (roll-dice (territory-dice dst-t))))
+  (if (> src-attack dst-defend) #t #f))
+
 ;                                                                          
 ;                                                                          
 ;                                                                          
