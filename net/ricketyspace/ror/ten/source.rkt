@@ -547,6 +547,19 @@
   (define dst-defend (sum (roll-dice (territory-dice dst-t))))
   (if (> src-attack dst-defend) #t #f))
 
+;; DiceWorld Territory -> DiceWorld
+;; generate dice world for the case where player
+;; loses the dice attack
+(define (dice-world-attack-lost w src-t)
+  (define src (territory-index src-t))
+  (define player (territory-player src-t))
+  (define newb (for/list ([t (dice-world-board w)])
+                 (define idx (territory-index t))
+                 (cond [(= idx src) (territory-set-dice t 1)]
+                       [else t])))
+  (define new-gt (game-tree newb player 0))
+  (dice-world #f newb new-gt))
+
 ;                                                                          
 ;                                                                          
 ;                                                                          
