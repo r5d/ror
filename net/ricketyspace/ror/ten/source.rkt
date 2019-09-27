@@ -521,7 +521,14 @@
   (define feasible (game-moves (dice-world-gt w)))
   (define attack   (list source target))
   (define next     (find-move feasible attack))
-  (if next (dice-world #f (game-board next) next) w))
+  (define src-t    (findf (lambda (t) (= (territory-index t) source))
+                          (dice-world-board w)))
+  (define dst-t    (findf (lambda (t) (= (territory-index t) target))
+                          (dice-world-board w)))
+  (define win? (dice-attack-win src-t dst-t))
+  (cond [(not next) w]
+        [win? (dice-world #f (game-board next) next)]
+        [else (dice-world-attack-lost w src-t)]))
 
 ;; [List-of Moves] [or '() [List Natural Natural]] -> [or #f Game-tree] 
 ;; find the move from the current list of moves
