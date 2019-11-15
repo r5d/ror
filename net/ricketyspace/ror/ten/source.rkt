@@ -554,6 +554,82 @@
   (define dst-defend (sum (roll-dice (territory-dice dst-t))))
   (if (> src-attack dst-defend) #t #f))
 
+
+(define (probability-of-winning st dt)
+  "Find the probability of source territory defeating destination territory.
+
+  `st` is the source territory.
+  `dt` is the destination territory."
+
+  ; Given the number of dice, returns a list all dice combinations.
+  (define (dice-all-combination dice-num)
+    (cond [(= dice-num 1)
+           (for/list ([i (in-range 1 7)])
+             (list i))]
+          [else
+           (for*/list ([i (in-range 1 7)]
+                       [r (dice-all-combination
+                           (- dice-num 1))])
+             (cons i r))]))
+
+
+  ; Given a list of dice combinations, returns a hashmap where the key
+  ; is the 'dice sum' and the value is the number of combinations
+  ; whose sum is the 'dice sum'.
+  (define (dice-sum-hash dice-combinations)
+    (for/foldr
+        ([h (make-hash)]) ([c dice-combinations])
+        (let ((sum (for/sum ([n c]) n)))
+          (hash-set! h sum (+ (hash-ref h sum 0) 1))
+          h)))
+
+
+  ; sh: -> hashmap
+  ;  key: dice sum,
+  ;  value: number of ways we can arrive at sum
+  (define sh (dice-sum-hash
+              (dice-all-combination (territory-dice st))))
+
+  ; dh: -> hashmap
+  ;  key: dice sum,
+  ;  value: number of ways we can arrive at sum
+  (define dh (dice-sum-hash
+              (dice-all-combination (territory-dice dt))))
+
+  ; Generic probability function.
+  (define (probability f t)
+    (/ (* 1.0 f) t))
+
+  ; Computes the total number of favorable outcomes for the source
+  ; territory when its dice sum is `s-ds` against the
+  ; destination's territory.
+  ;
+  ; s-ds -> source dice sum.
+  ; n    -> number of we can arrive at sum `s-ds`.
+  (define (favorable-outcomes s-ds n)
+    (* (for/sum [(d-ds (hash-keys dh))]
+         (if (< d-ds s-ds)
+             (hash-ref dh d-ds)
+             0))
+       n))
+
+  ; Computes the total number of favorable outcomes for the source
+  ; territory against the destination's territory.
+  (define (all-favorable-outcomes)
+    (foldr + 0
+           (for/list [(s-ds (hash-keys sh))]
+             (favorable-outcomes
+              s-ds
+              (hash-ref sh s-ds)))))
+
+  (define (all-outcomes)
+    (let ((sd (territory-dice st))
+          (dd (territory-dice dt)))
+      (* (expt 6 sd) (expt 6 dd))))
+
+  (probability (all-favorable-outcomes) (all-outcomes)))
+
+
 ;; DiceWorld Territory -> DiceWorld
 ;; generate dice world for the case where player
 ;; loses the dice attack
