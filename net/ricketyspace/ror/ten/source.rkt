@@ -252,7 +252,7 @@
 (define (draw-dice-world w)
   (add-player-info 
    (game-player (dice-world-gt w)) 
-   (add-board-to-scene w (ISCENE))))
+   (add-winning-probability w (add-board-to-scene w (ISCENE)))))
 
 ;; DiceWorld -> Boolean
 ;; is it possible to play any moves from this world state? 
