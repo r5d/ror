@@ -667,6 +667,29 @@
   (define txt (text str TEXT-SIZE TEXT-COLOR))
   (place-image txt (- WIDTH INFO-X-OFFSET) INFO-Y-OFFSET s))
 
+(define (add-winning-probability w s)
+  (define board  (dice-world-board w))
+  (define source (dice-world-src w))
+  (define target (territory-index (first board)))
+  (define feasible (game-moves (dice-world-gt w)))
+  (define attack   (list source target))
+  (define next     (find-move feasible attack))
+
+  (define (find-territory index)
+    (findf (lambda (t) (= (territory-index t) index))
+           (dice-world-board w)))
+
+  (if (and source next)
+      (place-image
+       (text (string-append
+              "Winning Probability "
+              (number->string
+               (probability-of-winning (find-territory source)
+                                       (find-territory target))))
+             TEXT-SIZE TEXT-COLOR)
+       (- WIDTH 150) 100 s)
+      s))
+
 ;; DiceWorld Scene -> Scene
 ;; folds through the board and creates an image representation of it
 (define (add-board-to-scene w s)
