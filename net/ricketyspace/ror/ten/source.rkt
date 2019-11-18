@@ -683,9 +683,10 @@
       (place-image
        (text (string-append
               "Winning Probability "
-              (number->string
+              (~r
                (probability-of-winning (find-territory source)
-                                       (find-territory target))))
+                                       (find-territory target))
+               #:precision 2))
              TEXT-SIZE TEXT-COLOR)
        (- WIDTH 150) 100 s)
       s))
