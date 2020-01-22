@@ -182,7 +182,7 @@
   "← and → to move among territories, <enter> to mark, <d> to unmark, and <p> to pass")
 (define AI-TURN "It's the Mighty AI's turn")
 (define YOUR-TURN "It's your turn")
-(define INFO-X-OFFSET 100)
+(define INFO-X-OFFSET 180)
 (define INFO-Y-OFFSET 50)
 
 (define INSTRUCTIONS (text INSTRUCT TEXT-SIZE TEXT-COLOR))
@@ -242,7 +242,9 @@
 ;; DiceWorld Key -> DiceWorld
 ;; Handles key events from a player
 (define (interact-with-board w k)
-  (cond [(key=? "left" k)
+  (cond [(= (game-player (dice-world-gt w)) AI)
+         (ai-step-through w)]
+        [(key=? "left" k)
          (refocus-board w left)]
         [(key=? "right" k)
          (refocus-board w right)]
@@ -695,7 +697,7 @@
                                        (find-territory target))
                #:precision 2))
              TEXT-SIZE TEXT-COLOR)
-       (- WIDTH 150) 100 s)
+       (- WIDTH 170) 100 s)
       s))
 
 ;; DiceWorld Scene -> Scene
@@ -831,9 +833,13 @@
   (define ratings  (rate-moves tree AI-DEPTH))
   (define the-move (first (argmax second ratings)))
   (define new-tree (move-gt the-move))
-  (if (= (game-player new-tree) AI)
-      (the-ai-plays new-tree)
-      new-tree))
+  new-tree)
+
+;; DiceWold -> DiceWorld
+;; Executes AI's turn.
+(define (ai-step-through w)
+  (define new-gt (the-ai-plays (dice-world-gt w)))
+  (dice-world #f (game-board new-gt) new-gt))
 
 ;; GameTree Natural -> [List-of (List Move Number)]
 ;; assigns a value to each move that is being considered
