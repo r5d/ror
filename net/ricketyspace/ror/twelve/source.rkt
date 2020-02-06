@@ -180,12 +180,15 @@
 (define TEXT-COLOR "black")
 (define INSTRUCT 
   "← and → to move among territories, <enter> to mark, <d> to unmark, and <p> to pass")
+(define AI-INSTRUCT
+  "press any key to let the AI play")
 (define AI-TURN "It's the Mighty AI's turn")
 (define YOUR-TURN "It's your turn")
 (define INFO-X-OFFSET 180)
 (define INFO-Y-OFFSET 50)
 
 (define INSTRUCTIONS (text INSTRUCT TEXT-SIZE TEXT-COLOR))
+(define AI-INSTRUCTIONS (text AI-INSTRUCT TEXT-SIZE TEXT-COLOR))
 (define WIDTH (+ (image-width INSTRUCTIONS) 50))
 (define HEIGHT 600)
 (define (PLAIN)
@@ -194,11 +197,15 @@
   (set! WIDTH  (+ (max iw bw) 50))
   (set! HEIGHT (+ (* SIDE 2 BOARD) 50))
   (empty-scene WIDTH HEIGHT))
-(define (ISCENE)
+(define (ISCENE w)
   (define mt (PLAIN))
   (when (or (> (image-width mt) 1280) (> (image-height mt) 800))
     (error 'scene "it is impossible to draw a ~s x ~s game scene for a 1280 x 800 laptop screen" (image-width mt) (image-height mt)))
-  (place-image INSTRUCTIONS (* .5 WIDTH) (* .9 HEIGHT) mt))
+  (place-image
+   (if (= (game-player (dice-world-gt w)) AI)
+       AI-INSTRUCTIONS
+       INSTRUCTIONS)
+   (* .5 WIDTH) (* .9 HEIGHT) mt))
 
 ;                                  
 ;                                  
@@ -261,7 +268,7 @@
 (define (draw-dice-world w)
   (add-player-info 
    (game-player (dice-world-gt w)) 
-   (add-winning-probability w (add-board-to-scene w (ISCENE)))))
+   (add-winning-probability w (add-board-to-scene w (ISCENE w)))))
 
 ;; DiceWorld -> Boolean
 ;; is it possible to play any moves from this world state? 
