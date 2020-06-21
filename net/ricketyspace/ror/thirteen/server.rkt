@@ -90,14 +90,14 @@
           [clients (server-state-clients u)]
           [done (server-state-done u)])
       (server-state interval clue guess paction "c" clients done)))
-  (define (set-gaction-guess)
+  (define (set-gaction gaction)
     (let ([interval (server-state-interval u)]
           [clue (server-state-clue u)]
           [guess (server-state-guess u)]
           [paction (server-state-paction u)]
           [clients (server-state-clients u)]
           [done (server-state-done u)])
-      (server-state interval clue guess paction "g" clients done)))
+      (server-state interval clue guess paction gaction clients done)))
   (define (has-clue)
     (> (string-length (server-state-clue u)) 0))
   (define (is-done)
@@ -112,7 +112,9 @@
          [done (server-state-done u)]
          [action-ok (string=? (server-state-gaction u) action)])
     (cond [(not action-ok) (make-bundle u empty (list client))]
-          [(is-done) (make-bundle u (mail "" current-guess "" #t) empty)]
+          [(is-done)
+           (make-bundle (set-gaction "")
+                        (mail "" current-guess "" #t) empty)]
           [(and (string=? action "g") (not (has-clue)))
            (let ([guess (guess interval)])
              (make-bundle (set-guess interval "" guess)
@@ -123,7 +125,7 @@
              (make-bundle (set-guess n-interval "" guess)
                           (mail "" guess "c" done) empty))]
           [(and (string=? action "c") (has-clue))
-           (make-bundle (set-gaction-guess)
+           (make-bundle (set-gaction "g")
                         (mail clue current-guess "g" done) empty)]
           [else (make-bundle u (mail clue current-guess action done)
                              empty)])))
