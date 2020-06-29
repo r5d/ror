@@ -279,11 +279,13 @@ The server is responsible for:
 ;; determine left-over foods 
 (define (eat-all-the-things player foods)
   (define b (ip-body player))
+  (define (new-cupcake)
+    (create-a-body CUPCAKE))
   (for/fold ([foods '()]) ([f foods])
     (cond
       [(body-collide? f b)
        (set-body-size! b (+ PLAYER-FATTEN-DELTA (body-size b)))
-       foods]
+       (cons (new-cupcake) foods)]
       [else (cons f foods)])))
 
 ;; body body -> Boolean
