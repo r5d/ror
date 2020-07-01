@@ -301,7 +301,14 @@ The server is responsible for:
 ;; moves all objects. may end game
 (define (progress pls foods spectators)
   (define p (play pls foods spectators))
-  (cond [(empty? foods) (end-game-broadcast p)]
+  (define (max-score)
+    (foldl (λ (pl max)
+             (let ([pl-score (cadr pl)])
+               (if (> pl-score max) pl-score max)))
+           0 (score pls)))
+  (define (end-game?)
+    (or (empty? foods) (> (max-score) 30)))
+  (cond [(end-game?) (end-game-broadcast p)]
         [else (broadcast-universe p)]))
 
 ;; PlayUniverse -> [Bundle JoinUniverse]
