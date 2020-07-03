@@ -491,7 +491,7 @@ The server is responsible for:
           [else (player (ip-id plyr)
                         (ip-body plyr)
                         (filter-out (ip-waypoints plyr)))]))
-  (foldl (lambda (plyr srlzd-pls) (cons (mk-pl plyr) srlzd-pls)) '() pls))
+  (foldr (lambda (plyr srlzd-pls) (cons (mk-pl plyr) srlzd-pls)) '() pls))
 
 ;                                                                                  
 ;                                                                                  
