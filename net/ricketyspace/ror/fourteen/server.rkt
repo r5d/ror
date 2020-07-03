@@ -731,8 +731,8 @@ The server is responsible for:
                   (make-bundle state (serial/broadcast-univ state) empty)))
   
   ;; eat-all-the-things
-  (check-equal? (eat-all-the-things  (ip iworld1 "player10" (body 11 0) '(1+10i)) (list (body 10 0)))
-                empty)
+  (check-pred >= (length (eat-all-the-things  (ip iworld1 "player10" (body 11 0) '(1+10i)) (list (body 10 0))))
+                1)
   (check-equal? (eat-all-the-things  (ip iworld1 "player10" (body 10 0) '(1+10i)) (list (body 10 40+5i)))
                 (list (body 10 40+5i)))
   
