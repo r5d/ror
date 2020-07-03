@@ -1048,4 +1048,18 @@ The server is responsible for:
     (check-equal? (broadcast-universe state)
                   (broadcast-universe state)))
   
+  ;; serialize-players-for
+  (let* ([waypoints1 (list (make-rectangular 383 212)
+                           (make-rectangular 282 192))]
+         [waypoints2 (list (make-rectangular 918 319)
+                           (make-rectangular 481 119)
+                           (make-rectangular 129 321))]
+        [pls (list (ip iworld1 "player10" (body 10 1+10i) waypoints1)
+                       (ip iworld2 "player345" (body 56 3+45i) waypoints2))]
+        [pl (first pls)])
+    (check-equal? (player-waypoints (first (serialize-players-for pl pls)))
+                  waypoints1)
+    (check-equal? (player-waypoints (second (serialize-players-for pl pls)))
+                  (list (make-rectangular 918 319))))
+
   "server: all tests run")
