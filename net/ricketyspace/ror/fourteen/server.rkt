@@ -1000,6 +1000,22 @@ The server is responsible for:
                                empty
                                empty))
                 (list iworld1))
+
+  ;; get-ips
+  (let ([players (list (ip iworld1 "player10" (body 10 1+10i) empty)
+                       (ip iworld2 "player345" (body 56 3+45i) empty))]
+        [spectators (list (ip iworld1 "player10" (body 15 2+65i) empty))])
+    (check-equal? (get-ips (play players
+                                 (list (body 87 67+23i)
+                                       (body 5 3+4i))
+                                 spectators))
+                  (append players spectators))
+    (check-equal? (get-ips (play (list (first players))
+                                 (list (body 87 67+23i)
+                                       (body 5 3+4i))
+                                 empty))
+                  (append (list (first players)) empty)))
+
   ;; broadcast
   (check-equal? (broadcast (list iworld1 iworld3 iworld2)
                            '(testing testing 1 2 3))
