@@ -450,7 +450,7 @@ The server is responsible for:
 ;; PlayUniverse -> [Bundle PlayUniverse [Listof [Mail StateMessage]]]
 ;; bundle this universe, serialize it, broadcast it, and drop noone
 (define (broadcast-universe p)
-  (define mails (broadcast (get-iws p) (serialize-universe p)))
+  (define mails (broadcast-for (get-ips p) p))
   (make-bundle p mails empty))
 
 ;; [Listof IWorlds] Message -> [Listof Mail]
@@ -463,6 +463,35 @@ The server is responsible for:
 (define (serialize-universe p)
   (define serialized-players (map ip-player (play-players p)))
   (list SERIALIZE serialized-players (play-food p)))
+
+;; [Listof IPs] PlayUniverse -> [Listof Mail]
+;; generates mails for all clients
+(define (broadcast-for ips p)
+  (define (mk-mail-for pl)
+    (make-mail (ip-iw pl) (serialize-universe-for pl p)))
+  (foldl (lambda (pl mails) (cons (mk-mail-for pl) mails)) '() ips))
+
+;; IP PlayUniverse -> (list s [Listof SerializedPlayer] [ListOf SerializedFood])
+;; prepares message for an update world/ServerState state for a player
+(define (serialize-universe-for pl p)
+  (list SERIALIZE
+        (serialize-players-for pl (play-players p))
+        (play-food p)))
+
+;; IP IPs -> [ListOf SerializedPlayer]
+;; prepares serialized list of players for the SERIALIZE message for a
+;; player.
+(define (serialize-players-for pl pls)
+  (define (filter-out waypoints)
+    (if (empty? waypoints)
+        waypoints
+    (list (first waypoints))))
+  (define (mk-pl plyr)
+    (cond [(id=? (ip-id plyr) (ip-id pl)) (ip-player plyr)]
+          [else (player (ip-id plyr)
+                        (ip-body plyr)
+                        (filter-out (ip-waypoints plyr)))]))
+  (foldl (lambda (plyr srlzd-pls) (cons (mk-pl plyr) srlzd-pls)) '() pls))
 
 ;                                                                                  
 ;                                                                                  
@@ -519,6 +548,10 @@ The server is responsible for:
 ;; gets the iworlds of all players
 (define (get-iws p)
   (map ip-iw (append (play-players p) (play-spectators p))))
+
+;; PlayUnivers -> [Listof IP]
+(define (get-ips p)
+  (append (play-players p) (play-spectators p)))
 
 ;; ServerState -> Bundle
 ;; makes a bundle that sends no messages and disconnects noone
